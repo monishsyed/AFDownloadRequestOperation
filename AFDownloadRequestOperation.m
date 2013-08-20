@@ -48,6 +48,7 @@ typedef void (^AFURLConnectionProgressiveOperationProgressBlock)(AFDownloadReque
 @end
 
 @implementation AFDownloadRequestOperation
+@synthesize targetPath = _targetPath;
 
 #pragma mark - NSObject
 
@@ -60,23 +61,9 @@ typedef void (^AFURLConnectionProgressiveOperationProgressBlock)(AFDownloadReque
     }
 }
 
-- (id)initWithRequest:(NSURLRequest *)urlRequest targetPath:(NSString *)targetPath shouldResume:(BOOL)shouldResume {
+- (id)initWithRequest:(NSURLRequest *)urlRequest {
     if ((self = [super initWithRequest:urlRequest])) {
-        NSParameterAssert(targetPath != nil && urlRequest != nil);
-        _shouldResume = shouldResume;
-
-        // Ee assume that at least the directory has to exist on the targetPath
-        BOOL isDirectory;
-        if(![[NSFileManager defaultManager] fileExistsAtPath:targetPath isDirectory:&isDirectory]) {
-            isDirectory = NO;
-        }
-        // \If targetPath is a directory, use the file name we got from the urlRequest.
-        if (isDirectory) {
-            NSString *fileName = [urlRequest.URL lastPathComponent];
-            _targetPath = [NSString pathWithComponents:@[targetPath, fileName]];
-        }else {
-            _targetPath = targetPath;
-        }
+         _shouldResume = YES;
 
         // Download is saved into a temorary file and renamed upon completion.
         NSString *tempPath = [self tempPath];
@@ -136,13 +123,32 @@ typedef void (^AFURLConnectionProgressiveOperationProgressBlock)(AFDownloadReque
 
 - (NSString *)tempPath {
     NSString *tempPath = nil;
-    if (self.targetPath) {
-        NSString *md5URLString = [[self class] md5StringForString:self.targetPath];
-        tempPath = [[[self class] cacheFolder] stringByAppendingPathComponent:md5URLString];
+    NSString *urlString = self.request.URL.absoluteString;
+    if (urlString) {
+      NSString *md5URLString = [[self class] md5StringForString:urlString];
+      tempPath = [[[self class] cacheFolder] stringByAppendingPathComponent:md5URLString];
     }
     return tempPath;
 }
 
+- (void)setTargetPath:(NSString *)targetPath {
+  // Ee assume that at least the directory has to exist on the targetPath
+  BOOL isDirectory;
+  if(![[NSFileManager defaultManager] fileExistsAtPath:targetPath isDirectory:&isDirectory]) {
+    isDirectory = NO;
+  }
+  // \If targetPath is a directory, use the file name we got from the urlRequest.
+  if (isDirectory) {
+    NSString *fileName = [self.request.URL lastPathComponent];
+    _targetPath = [[NSString pathWithComponents:@[targetPath, fileName]] copy];
+  }else {
+    _targetPath = [targetPath copy];
+  }
+}
+
+- (NSString *)targetPath {
+  return [_targetPath copy];
+}
 
 - (void)setProgressiveDownloadProgressBlock:(void (^)(AFDownloadRequestOperation *operation, NSInteger bytesRead, long long totalBytesRead, long long totalBytesExpected, long long totalBytesReadForFile, long long totalBytesExpectedToReadForFile))block {
     self.progressiveDownloadProgress = block;

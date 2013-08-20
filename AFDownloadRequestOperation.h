@@ -37,7 +37,7 @@
  
  If the target is a directory, we use the last part of the URL as a default file name.
  */
-@property (strong) NSString *targetPath;
+@property (copy) NSString *targetPath;
 
 /**
  A Boolean value that indicates if we should allow a downloaded file to overwrite
@@ -73,19 +73,6 @@
  The callback dispatch queue on progressive download. If `NULL` (default), the main queue is used.
  */
 @property (nonatomic, assign) dispatch_queue_t progressiveDownloadCallbackQueue;
-
-///----------------------------------
-/// @name Creating Request Operations
-///----------------------------------
-
-/**
- Creates and returns an `AFDownloadRequestOperation`
- @param urlRequest The request object to be loaded asynchronously during execution of the operation
- @param targetPath The target path (with or without file name)
- @param shouldResume If YES, tries to resume a partial download if found.
- @return A new download request operation
- */
-- (id)initWithRequest:(NSURLRequest *)urlRequest targetPath:(NSString *)targetPath shouldResume:(BOOL)shouldResume;
 
 /** 
  Deletes the temporary file.
